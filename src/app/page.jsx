@@ -798,8 +798,6 @@ export default function Home() {
     const successMembers = dataSelected.filter(el => el.approve_status == 'success')
     const rejectMembers = dataSelected.filter(el => el.approve_status == 'reject')
 
-    console.log(successMembers, rejectMembers)
-
     if (reasonReject.length == 0 || (reasonReject == 'reason-other' && reasonDescription.length == 0)) {
       setAlertDescription({
         icon: 'warning',
