@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from 'react';
 import { Button, Col, Container, Dropdown, DropdownButton, Form, Image, InputGroup, Modal, Pagination, Row, Tab, Table, Tabs } from 'react-bootstrap';
+import { CircleFill, ExclamationCircleFill, X } from 'react-bootstrap-icons';
 
 export default function Home() {
 
@@ -98,6 +99,8 @@ export default function Home() {
 
   const [memberList, setMemberList] = useState([
     {
+      'username': 'abc111',
+      'name': '111',
       'investment_type': '소득적격',
       'register_type': '개인전문',
       'documents': [
@@ -113,6 +116,8 @@ export default function Home() {
       'approved_by': ''
     },
     {
+      'username': 'abc222',
+      'name': '222',
       'investment_type': '소득적격',
       'register_type': '개인전문',
       'documents': [
@@ -128,6 +133,8 @@ export default function Home() {
       'approved_by': '김관리자'
     },
     {
+      'username': 'abc333',
+      'name': '333',
       'investment_type': '소득적격',
       'register_type': '개인전문',
       'documents': [
@@ -143,6 +150,8 @@ export default function Home() {
       'approved_by': ''
     },
     {
+      'username': 'abc444',
+      'name': '444',
       'investment_type': '소득적격',
       'register_type': '개인전문',
       'documents': [
@@ -161,6 +170,10 @@ export default function Home() {
   const [dataPerPage, setDatePerPage] = useState([[]])
   const [currentIndexPage, setCurrentIndexPage] = useState(0)
 
+  const [dataSelected, setDataSelected] = useState([])
+
+  const [username, setUsername] = useState('')
+  const [name, setName] = useState('')
   const [fileSelected, setFileSelected] = useState([])
   const hiddenFileInput = useRef(null)
 
@@ -170,6 +183,8 @@ export default function Home() {
     setModalAddDataShow(false)
     setFileSelected([])
     setInvestmentTypeSelected(investmentTypeList[0].key)
+    setUsername('')
+    setName('')
   }
 
   const handleShowAddData = () => setModalAddDataShow(true)
@@ -183,14 +198,18 @@ export default function Home() {
   const handleCloseRejectData = () => {
     setModalRejectDataShow(false)
     setIsCheckReason(false)
+    setUsername('')
+    setName('')
     setReasonReject('')
     setReasonDescription('')
   }
 
-  const handleShowRejectData = () => setModalRejectDataShow(true)
-
-  const handleSubmitRejectData = () => {
-    setIsCheckReason(true)
+  const handleShowRejectData = () => {
+    const usernames = dataSelected.map(el => el.username).join(', ')
+    const names = dataSelected.map(el => el.name).join(', ')
+    setUsername(usernames)
+    setName(names)
+    setModalRejectDataShow(true)
   }
 
   const [modalDocumentDataShow, setModalDocumentDataShow] = useState(false)
@@ -207,6 +226,20 @@ export default function Home() {
   const handleShowDocumentData = (documents) => {
     setDocumentData(documents)
     setModalDocumentDataShow(true)
+  }
+
+  const [modalAlertShow, setModalAlertShow] = useState(false)
+
+  const [alertDescription, setAlertDescription] = useState({
+    icon: 'warning',
+    text: '선택된 신청건이 없습니다.'
+  })
+
+  const handleCloseAlert = () => {
+    setModalAlertShow(false)
+    if (alertDescription.callback) {
+      alertDescription.callback()
+    }
   }
 
   const handleClickChooseFile = () => {
@@ -335,12 +368,12 @@ export default function Home() {
         color: '#9A3412',
         label: '승인대기'
       },
-      success: {
+      reject: {
         background_color: '#FEE2E2',
         color: '#991B1B',
         label: '승인거부'
       },
-      reject: {
+      success: {
         background_color: '#DCFCE7',
         color: '#166534',
         label: '승인완료'
@@ -366,6 +399,10 @@ export default function Home() {
       )
     }
 
+    const arraysEqual = (a1, a2) => {
+      return JSON.stringify(a1) == JSON.stringify(a2);
+    }
+
     return (
       <Table className='mt-3' style={{
         display: 'block',
@@ -374,7 +411,15 @@ export default function Home() {
       }}>
         <thead>
           <tr>
-            <th style={{ width: '3rem' }}><input type="checkbox" /></th>
+            <th style={{ width: '3rem' }}>
+              <input
+                type="checkbox"
+                checked={arraysEqual(dataSelected, dataPerPage[currentIndexPage])}
+                onClick={() => arraysEqual(dataSelected, dataPerPage[currentIndexPage])
+                  ? setDataSelected([])
+                  : setDataSelected(dataPerPage[currentIndexPage])}
+              />
+            </th>
             <th style={{ width: '4rem' }}>NO</th>
             <th style={{ width: '6rem' }}>기존유형</th>
             <th style={{ width: '6rem' }}>신청유형</th>
@@ -391,7 +436,15 @@ export default function Home() {
             dataPerPage[currentIndexPage]
               ? dataPerPage[currentIndexPage].map((member, index) => (
                 <tr key={`member-${index}`}>
-                  <td style={{ width: '3rem' }}><input type="checkbox" /></td>
+                  <td style={{ width: '3rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={dataSelected.find(el => el.username == member.username) != undefined}
+                      onClick={() => dataSelected.find(el => el.username == member.username)
+                        ? setDataSelected(dataSelected.filter(el => el.username != member.username))
+                        : setDataSelected([...dataSelected, member])}
+                    />
+                  </td>
                   <td style={{ width: '4rem' }}>{index + 1}</td>
                   <td style={{ width: '6rem' }}>{member.investment_type}</td>
                   <td style={{ width: '6rem' }}>{member.register_type}</td>
@@ -466,7 +519,7 @@ export default function Home() {
     )
   }
 
-  const renderInputTextGroup = (label, fieldName, val, isDisabled = false, width = '15%') => {
+  const renderInputTextGroup = (label, fieldName, state = '', setState, isDisabled = false, width = '15%') => {
     return (
       <InputGroup>
         <InputGroup.Text id={fieldName} style={{ backgroundColor: '#EBEEF3', borderRadius: 0, width: width }}>
@@ -475,7 +528,8 @@ export default function Home() {
         <Form.Control
           aria-describedby={fieldName}
           style={{ borderRadius: 0, pointerEvents: isDisabled ? 'none' : 'visible' }}
-          value={`${val}`}
+          value={`${state}`}
+          onChange={(event) => setState(event.target.value)}
         />
       </InputGroup>
     )
@@ -601,6 +655,72 @@ export default function Home() {
     )
   }
 
+  const bytesToMegaBytes = bytes => bytes / (1024 * 1024)
+
+  const onSubmitAddData = () => {
+    try {
+      setAlertDescription({
+        icon: 'success',
+        text: '저장되었습니다.'
+      })
+      setModalAlertShow(true)
+      handleCloseAddData()
+    } catch (err) {
+      setAlertDescription({
+        icon: 'warning',
+        text: '파일 등록에 실패하였습니다.'
+      })
+      setModalAlertShow(true)
+    }
+  }
+
+  const handleSubmitAddData = () => {
+    setModalAddDataShow(false)
+    const findNotAllow = fileSelected.filter(el =>
+      (el.name).match(/^.*jpg$/) || (el.name).match(/^.*jpeg$/) ||
+      (el.name).match(/^.*gif$/) || (el.name).match(/^.*png$/) ||
+      (el.name).match(/^.*pdf$/)
+    )
+    const findOverSize = fileSelected.filter(el => bytesToMegaBytes(el.size) > 100)
+    if (username.length == 0 || name.length == 0) {
+      setAlertDescription({
+        icon: 'warning',
+        text: '필수입력항목을 입력해주세요.',
+        callback: () => setModalAddDataShow(true)
+      })
+      setModalAlertShow(true)
+    } else if (findNotAllow.length > 0) {
+      setAlertDescription({
+        icon: 'warning',
+        text: 'jpg, jpeg, gif, png, pdf 파일만 등록 가능합니다.',
+        callback: () => setModalAddDataShow(true)
+      })
+      setModalAlertShow(true)
+    } else if (fileSelected.length > 10) {
+      setAlertDescription({
+        icon: 'warning',
+        text: '최대 10개까지 등록 가능합니다.',
+        callback: () => setModalAddDataShow(true)
+      })
+      setModalAlertShow(true)
+    } else if (findOverSize.length > 0) {
+      setAlertDescription({
+        icon: 'warning',
+        text: '최대 100MB까지 등록 가능합니다.',
+        callback: () => setModalAddDataShow(true)
+      })
+      setModalAlertShow(true)
+    } else {
+      setAlertDescription({
+        icon: 'warning',
+        text: '투자유형을 변경하시겠습니까?',
+        callback: () => setModalAddDataShow(true),
+        callFn: () => onSubmitAddData()
+      })
+      setModalAlertShow(true)
+    }
+  }
+
   const renderAddDataModal = () => {
     return (
       <Modal
@@ -616,8 +736,8 @@ export default function Home() {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {renderInputTextGroup('회원번호', 'username')}
-          {renderInputTextGroup('회원명/법인명', 'name')}
+          {renderInputTextGroup('회원번호', 'username', username, setUsername)}
+          {renderInputTextGroup('회원명/법인명', 'name', name, setName)}
           {renderInputDropdownGroup('투자유형', true)}
           {renderInputBtnGroup('서류첨부', true)}
           <div style={{ marginTop: 12, marginBottom: 24 }}>
@@ -637,11 +757,11 @@ export default function Home() {
             ref={hiddenFileInput}
             multiple
             style={{ display: 'none' }}
-            accept='image/*'
+          // accept='image/*'
           />
         </Modal.Body>
         <Modal.Footer style={{ display: "flex", justifyContent: "center" }}>
-          <Button variant='primary' style={{ width: '8rem' }} active onClick={handleCloseAddData}>
+          <Button variant='primary' style={{ width: '8rem' }} active onClick={handleSubmitAddData}>
             저장
           </Button>
           <Button variant='light' style={{ width: '8rem', borderColor: '#2A3958', backgroundColor: '#FFFFFF' }} onClick={handleCloseAddData}>
@@ -650,6 +770,61 @@ export default function Home() {
         </Modal.Footer>
       </Modal>
     )
+  }
+
+  const onSubmitRejectData = () => {
+    setAlertDescription({
+      icon: 'success',
+      text: '저장되었습니다.'
+    })
+    setModalAlertShow(true)
+    handleCloseRejectData()
+  }
+
+  const onCheckReasonClick = () => {
+    setModalRejectDataShow(false)
+    setAlertDescription({
+      icon: 'warning',
+      text: '선택된 2명의 승인상태를 변경하시겠습니까?',
+      callback: () => setModalRejectDataShow(true),
+      callFn: () => onSubmitRejectData()
+    })
+    setModalAlertShow(true)
+  }
+
+  const handleSubmitRejectData = () => {
+    setModalRejectDataShow(false)
+
+    const successMembers = dataSelected.filter(el => el.approve_status == 'success')
+    const rejectMembers = dataSelected.filter(el => el.approve_status == 'reject')
+
+    console.log(successMembers, rejectMembers)
+
+    if (reasonReject.length == 0 || (reasonReject == 'reason-other' && reasonDescription.length == 0)) {
+      setAlertDescription({
+        icon: 'warning',
+        text: '필수입력항목을 입력해주세요.',
+        callback: () => setModalRejectDataShow(true)
+      })
+      setModalAlertShow(true)
+    } else if (successMembers.length > 0) {
+      setAlertDescription({
+        icon: 'warning',
+        text: '이미 승인 완료된 회원입니다.',
+        callback: () => setModalRejectDataShow(true)
+      })
+      setModalAlertShow(true)
+    } else if (rejectMembers.length > 0) {
+      setAlertDescription({
+        icon: 'warning',
+        text: '이미 승인 거부된 회원입니다.',
+        callback: () => setModalRejectDataShow(true)
+      })
+      setModalAlertShow(true)
+    } else {
+      setModalRejectDataShow(true)
+      setIsCheckReason(true)
+    }
   }
 
   const renderRejectDataModal = () => {
@@ -667,17 +842,17 @@ export default function Home() {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {renderInputTextGroup('회원번호', 'username', 'abc111, abc222', true)}
-          {renderInputTextGroup('회원명/법인명', 'name', '김길동, ㈜가나다라투자', true)}
+          {renderInputTextGroup('회원번호', 'username', username, setUsername, true)}
+          {renderInputTextGroup('회원명/법인명', 'name', name, setName, true)}
           {renderInputCheckboxGroup('승인거부 사유', true)}
           {
             isCheckReason ? (
               <Row className='mt-3'>
                 <Col xs={6} style={{ paddingRight: 0 }}>
-                  {renderInputTextGroup('최근저장일시', 'approved_at', '2022-01-01 09:00:00', true, '30%')}
+                  {renderInputTextGroup('최근저장일시', 'approved_at', '2022-01-01 09:00:00', null, true, '30%')}
                 </Col>
                 <Col xs={6}>
-                  {renderInputTextGroup('관리자', 'approved_by', '김관리자', true, '30%')}
+                  {renderInputTextGroup('관리자', 'approved_by', '김관리자', null, true, '30%')}
                 </Col>
               </Row>
             ) : null
@@ -686,7 +861,7 @@ export default function Home() {
         <Modal.Footer style={{ display: "flex", justifyContent: "center" }}>
           {
             isCheckReason ? (
-              <Button variant='primary' style={{ width: '8rem' }} active onClick={handleCloseRejectData}>
+              <Button variant='primary' style={{ width: '8rem' }} active onClick={onCheckReasonClick}>
                 확인
               </Button>
             ) : (
@@ -752,6 +927,77 @@ export default function Home() {
     )
   }
 
+  const renderAlertModal = () => {
+
+    const svgIcon = {
+      'warning': (
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="30" height="30" rx="15" fill="#FEF0C7" />
+          <rect x="2" y="2" width="30" height="30" rx="15" stroke="#FFFAEB" stroke-width="4" />
+          <path d="M15.5166 17.6853C15.5736 18.2785 15.6702 18.7194 15.803 19.0102C15.9376 19.3002 16.1764 19.4448 16.5212 19.4448C16.5856 19.4448 16.6433 19.4347 16.7005 19.423C16.7591 19.4347 16.8165 19.4448 16.8814 19.4448C17.2252 19.4448 17.4648 19.3002 17.5986 19.0102C17.7322 18.7194 17.8271 18.2785 17.8852 17.6853L18.1913 13.1052C18.2483 12.2124 18.2773 11.5719 18.2773 11.183C18.2773 10.6538 18.1393 10.2409 17.8623 9.94437C17.5843 9.64789 17.2191 9.5 16.7668 9.5C16.7427 9.5 16.7246 9.50539 16.7009 9.50633C16.6784 9.50539 16.6599 9.5 16.6365 9.5C16.1832 9.5 15.8187 9.64789 15.5412 9.94437C15.264 10.2413 15.125 10.6545 15.125 11.1833C15.125 11.5721 15.1534 12.2127 15.2113 13.1054L15.5166 17.6853ZM16.7124 21.1189C16.2732 21.1189 15.9001 21.2574 15.5902 21.5345C15.2806 21.8117 15.1255 22.1483 15.1255 22.5434C15.1255 22.9895 15.2825 23.3405 15.5942 23.5955C15.9073 23.8505 16.2725 23.978 16.6899 23.978C17.1148 23.978 17.4854 23.8524 17.8023 23.6005C18.1187 23.3492 18.2769 22.9963 18.2769 22.5439C18.2769 22.1488 18.1255 21.8122 17.8227 21.5349C17.5198 21.2574 17.1498 21.1189 16.7117 21.1189" fill="#D46B08" />
+        </svg>
+      ),
+      'success': (
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="30" height="30" rx="15" fill="#D1FADF" />
+          <rect x="2" y="2" width="30" height="30" rx="15" stroke="#ECFDF3" stroke-width="4" />
+          <g clip-path="url(#clip0_1_2220)">
+            <path d="M13.25 17L15.75 19.5L20.75 14.5M25.3333 17C25.3333 21.6023 21.6023 25.3333 17 25.3333C12.3976 25.3333 8.66663 21.6023 8.66663 17C8.66663 12.3976 12.3976 8.66663 17 8.66663C21.6023 8.66663 25.3333 12.3976 25.3333 17Z" stroke="#039855" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </g>
+          <defs>
+            <clipPath id="clip0_1_2220">
+              <rect width="20" height="20" fill="white" transform="translate(7 7)" />
+            </clipPath>
+          </defs>
+        </svg>
+      )
+    }
+
+    return (
+      <Modal
+        size='sm'
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
+        show={modalAlertShow}
+        onHide={handleCloseAlert}
+      >
+        <Modal.Body>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {svgIcon[alertDescription.icon]}
+            <X
+              color='#667085'
+              size={24}
+              style={{
+                cursor: 'pointer'
+              }}
+            />
+          </div>
+          <div className='mt-3 mb-4'>
+            {alertDescription.text}
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            {
+              alertDescription.callFn ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Button variant='primary' style={{ width: '48%' }} active onClick={alertDescription.callFn}>
+                    확인
+                  </Button>
+                  <Button variant='light' style={{ width: '48%', borderColor: '#2A3958', backgroundColor: '#FFFFFF' }} onClick={handleCloseAlert}>
+                    취소
+                  </Button>
+                </div>
+              ) : (
+                <Button variant='primary' style={{ width: '48%' }} active onClick={handleCloseAlert}>
+                  확인
+                </Button>
+              )
+            }
+          </div>
+        </Modal.Body>
+      </Modal>
+    )
+  }
+
   return (
     <Container style={{ marginTop: 20, marginBottom: 20 }}>
       <Tabs
@@ -771,6 +1017,7 @@ export default function Home() {
           {renderAddDataModal()}
           {renderRejectDataModal()}
           {renderDocumentModal()}
+          {renderAlertModal()}
         </Tab>
         <Tab eventKey="transfer" title="입출금내역 조회">
           입출금내역 조회
