@@ -901,11 +901,14 @@ export default function Home() {
             <div style={{ width: '85%', textAlign: 'center', overflowY: 'scroll', maxHeight: '40rem' }}>
               {
                 documentData.map((url, index) => (
-                  <div className={`mb-2 ${index == 0 ? 'mt-2' : ''}`}>
+                  <div
+                    key={`document-${index}`}
+                    className={`mb-2 ${index == 0 ? 'mt-2' : ''}`}
+                  >
                     <Image
-                      key={`document-${index}`}
                       src={url}
                       rounded
+                      alt='document'
                     />
                   </div>
                 ))
