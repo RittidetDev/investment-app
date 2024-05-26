@@ -798,7 +798,9 @@ export default function Home() {
     const successMembers = dataSelected.filter(el => el.approve_status == 'success')
     const rejectMembers = dataSelected.filter(el => el.approve_status == 'reject')
 
-    if (reasonReject.length == 0 || (reasonReject == 'reason-other' && reasonDescription.length == 0)) {
+    if (reasonReject.length == 0 || (reasonReject == 'reason-other' && reasonDescription.length == 0) ||
+      username.length == 0 || name.length == 0
+    ) {
       setAlertDescription({
         icon: 'warning',
         text: '필수입력항목을 입력해주세요.',
